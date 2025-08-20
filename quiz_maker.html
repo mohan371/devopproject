@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simple Quiz Maker</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .question { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+
+  <h1>Simple Quiz Maker</h1>
+
+  <div id="quiz-creator">
+    <h2>Create a Quiz</h2>
+    <input id="quiz-title" placeholder="Quiz Title" /><br/><br/>
+    <textarea id="quiz-questions" rows="8" cols="50" placeholder="Enter questions like: Question?;Option1,Option2,Option3;CorrectOptionIndex (0-based)
+Example:
+What is 2 + 2?;3,4,5;1
+What color is the sky?;Blue,Red,Green;0
+"></textarea><br/><br/>
+    <button onclick="createQuiz()">Create Quiz</button>
+  </div>
+
+  <hr/>
+
+  <div id="quiz-taker" style="display:none;">
+    <h2 id="quiz-title-display"></h2>
+    <form id="quiz-form"></form>
+    <button onclick="submitQuiz()">Submit Quiz</button>
+    <button onclick="resetQuiz()">Create New Quiz</button>
+    <p id="score"></p>
+  </div>
+
+<script>
+  let quizData = null;
+
+  function createQuiz() {
+    const title = document.getElementById('quiz-title').value.trim();
+    const rawQuestions = document.getElementById('quiz-questions').value.trim();
+    if (!title || !rawQuestions) {
+      alert('Please enter a title and questions');
+      return;
+    }
+
+    const questions = rawQuestions.split('\n').map(line => {
+      const parts = line.split(';');
+      if (parts.length !== 3) return null;
+      const question = parts[0];
+      const options = parts[1].split(',');
+      const answerIndex = parseInt(parts[2]);
+      if (isNaN(answerIndex) || answerIndex < 0 || answerIndex >= options.length) return null;
+      return { question, options, answerIndex };
+    });
+
+    if (questions.includes(null)) {
+      alert('Please check the question format.');
+      return;
+    }
+
+    quizData = { title, questions };
+    showQuiz();
+  }
+
+  function showQuiz() {
+    document.getElementById('quiz-creator').style.display = 'none';
+    document.getElementById('quiz-taker').style.display = 'block';
+    document.getElementById('quiz-title-display').innerText = quizData.title;
+
+    const form = document.getElementById('quiz-form');
+    form.innerHTML = '';
+
+    quizData.questions.forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'question';
+      div.innerHTML = `<p><b>${q.question}</b></p>`;
+      q.options.forEach((opt, idx) => {
+        const id = `q${i}o${idx}`;
+        div.innerHTML += `
+          <label>
+            <input type="radio" name="q${i}" value="${idx}" id="${id}" />
+            ${opt}
+          </label><br/>
+        `;
+      });
+      form.appendChild(div);
+    });
+
+    document.getElementById('score').innerText = '';
+  }
+
+  function submitQuiz() {
+    let score = 0;
+    const form = document.getElementById('quiz-form');
+    quizData.questions.forEach((q, i) => {
+      const selected = form.querySelector(`input[name="q${i}"]:checked`);
+      if (selected && parseInt(selected.value) === q.answerIndex) {
+        score++;
+      }
+    });
+    document.getElementById('score').innerText = `Your score: ${score} / ${quizData.questions.length}`;
+  }
+
+  function resetQuiz() {
+    quizData = null;
+    document.getElementById('quiz-creator').style.display = 'block';
+    document.getElementById('quiz-taker').style.display = 'none';
+    document.getElementById('quiz-title').value = '';
+    document.getElementById('quiz-questions').value = '';
+    document.getElementById('score').innerText = '';
+  }
+</script>
+
+</body>
+</html>
